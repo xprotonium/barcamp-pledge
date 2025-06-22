@@ -1,0 +1,69 @@
+BARCAMP PLEDGE APPLICATION - SETUP STEPS
+==========================================
+
+PREREQUISITES:
+- Node.js (v16 or higher)
+- npm or yarn
+- Firebase project
+
+STEP 1: CLONE AND INSTALL
+-------------------------
+git clone <your-repository-url>
+cd pledge-form-test
+npm install
+
+STEP 2: ENVIRONMENT SETUP
+-------------------------
+1. Copy environment file:
+   cp .env.example .env
+
+2. Edit .env with your Firebase config:
+   VITE_FIREBASE_API_KEY=your_firebase_api_key_here
+   VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+   VITE_ADMIN_EMAIL=your_admin_email@example.com
+
+STEP 3: FIREBASE SETUP
+----------------------
+1. Go to Firebase Console: https://console.firebase.google.com/
+2. Create new project or use existing one
+3. Enable Authentication (Email/Password)
+4. Enable Firestore Database
+5. Create admin user in Authentication with your email
+6. Copy Firebase config values to .env file
+
+STEP 4: UPDATE FIRESTORE RULES (CRITICAL!)
+------------------------------------------
+Edit firestore.rules and replace placeholder email:
+allow read: if request.auth != null &&
+             request.auth.token.email in [
+               "your_actual_admin_email@example.com"  // YOUR REAL EMAIL HERE
+             ];
+
+STEP 5: RUN DEVELOPMENT SERVER
+------------------------------
+npm run dev
+Visit: http://localhost:5173
+
+STEP 6: BUILD AND DEPLOY
+------------------------
+npm run build
+firebase login
+firebase init hosting
+firebase deploy
+
+IMPORTANT NOTES:
+- The .env file contains sensitive data - never commit it to git
+- Update firestore.rules with your actual admin email before deploying
+- Admin dashboard won't work without updating firestore rules
+- Firebase API key is safe to share (it's public)
+- Admin email in .env controls who can access admin features
+
+TROUBLESHOOTING:
+- White screen = missing .env file or wrong environment variables
+- Can't access admin = check firestore rules and admin email
+- Login fails = verify Firebase Authentication user exists 

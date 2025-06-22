@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public write access to submit form
+    match /pledgeResponses/{docId} {
+      // Users (not logged in) can write, but can't read
+      allow write: if true;
+
+      // Only logged-in admins can read
+      // Note: Replace with actual admin emails in production
+      allow read: if request.auth != null &&
+                   request.auth.token.email in [
+                     "admin@example.com"
+                   ];
+    }
+  }
+}
