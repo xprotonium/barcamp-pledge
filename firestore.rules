@@ -8,12 +8,8 @@ service cloud.firestore {
       // Users (not logged in) can write, but can't read
       allow write: if true;
 
-      // Only logged-in admins can read
-      // Note: Replace with actual admin emails in production
-      allow read: if request.auth != null &&
-                   request.auth.token.email in [
-                     "admin@example.com"
-                   ];
+      // Any authenticated user can read
+      allow read: if request.auth != null;
     }
   }
 }
