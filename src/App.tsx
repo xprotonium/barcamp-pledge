@@ -11,6 +11,8 @@ function App() {
     .map((email: string) => email.trim())
     .filter(Boolean);
 
+  console.log("Admin Emails from ENV:", adminEmails);
+
   return (
     <Router>
       <div>

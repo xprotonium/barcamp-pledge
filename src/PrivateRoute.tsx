@@ -27,6 +27,13 @@ function PrivateRoute({ children, allowedEmails }: Props) {
 
   if (checking) return <p>Loading...</p>;
 
+  console.log(
+    "PrivateRoute: userEmail",
+    userEmail,
+    "allowedEmails",
+    allowedEmails
+  );
+
   if (userEmail && allowedEmails.includes(userEmail)) {
     return children;
   }
