@@ -6,7 +6,10 @@ import PrivateRoute from "./PrivateRoute";
 import Navbar from "./Navbar";
 
 function App() {
-  const adminEmails = [import.meta.env.VITE_ADMIN_EMAIL];
+  const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || "")
+    .split(",")
+    .map((email: string) => email.trim())
+    .filter(Boolean);
 
   return (
     <Router>
