@@ -2,6 +2,7 @@ import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase";
 import { useNavigate } from "react-router-dom";
+import { sanitizeInput } from "./sanitize";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -15,8 +16,12 @@ function Login() {
     setLoading(true);
     setError("");
 
+    // Sanitize inputs before login
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedPassword = sanitizeInput(password);
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, sanitizedEmail, sanitizedPassword);
       navigate("/admin");
     } catch (err: any) {
       setError("Invalid email or password");

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { db } from "./firebase";
 import { collection, addDoc } from "firebase/firestore";
 import barcampBanner from "./assets/barcamp-banner.png";
+import { sanitizeInput } from "./sanitize";
 
 function Pledge() {
   const [answer1, setAnswer1] = useState("");
@@ -10,16 +11,20 @@ function Pledge() {
   const [error, setError] = useState("");
 
   const handleSubmit = async () => {
-    if (!answer1.trim() || !answer2.trim() || !answer3.trim()) {
+    // Sanitize inputs before validation and submission
+    const sanitizedAnswer1 = sanitizeInput(answer1);
+    const sanitizedAnswer2 = sanitizeInput(answer2);
+    const sanitizedAnswer3 = sanitizeInput(answer3);
+    if (!sanitizedAnswer1 || !sanitizedAnswer2 || !sanitizedAnswer3) {
       setError("All fields are required.");
       return;
     }
     setError("");
     try {
       await addDoc(collection(db, "pledgeResponses"), {
-        answer1,
-        answer2,
-        answer3,
+        answer1: sanitizedAnswer1,
+        answer2: sanitizedAnswer2,
+        answer3: sanitizedAnswer3,
         timestamp: new Date(),
       });
       alert("Response submitted successfully!");
