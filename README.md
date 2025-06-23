@@ -49,13 +49,13 @@ A React-based pledge form application for BarCamp events with Firebase backend a
 1. Head to firebase console and copy the config values to the .env file
 2. Make sure that the `.env` file is in .gitignore so that it does not get pushed to the repository
 
-#### Step 3: Live testing
+#### Step 4: Live testing
 
 When working on the website run this command to view your changes in real time.
 
 - `npm run dev`
 
-#### Step 4: Build and Deploy
+#### Step 5: Build and Deploy
 
 ```
 npm run build
