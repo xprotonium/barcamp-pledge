@@ -46,7 +46,7 @@ function Pledge() {
           style={{ borderRadius: "8px 8px 8px 8px" }}
         />
         <div className="card shadow p-3 p-md-4">
-          <h3 className="mb-4 text-center">Pledge a Topic!</h3>
+          <h3 className="mb-4 text-center">Placeholder Form Test</h3>
           <div className="justify-content-center align-items-center">
             {error && <div className="alert alert-danger">{error}</div>}
             <div className="mb-3">
