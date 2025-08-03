@@ -126,6 +126,33 @@ function AdminDashboard() {
     }
   };
 
+  const handleExportCSV = () => {
+
+    if (responses.length === 0) return;
+
+    const header = ["#", "Answer 1", "Answer 2", "Answer 3", "Timestamp"];
+    const rows = responses.map((entry, index) => [
+      index + 1,
+      entry.answer1?.replace(/,/g, ""),
+      entry.answer2?.replace(/,/g, ""),
+      entry.answer3?.replace(/,/g, ""),
+      new Date(entry.timestamp?.seconds * 1000).toLocaleString(),
+    ]);
+
+    const csvContent =
+      [header, ...rows].map((row) => row.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "pledge_submissions.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -230,6 +257,9 @@ function AdminDashboard() {
       {responses.length === 0 ? (
         <div className="alert alert-info">No pledge responses yet.</div>
       ) : (
+        <>
+        
+        
         <table className="table table-bordered">
           <thead>
             <tr>
@@ -253,7 +283,14 @@ function AdminDashboard() {
               </tr>
             ))}
           </tbody>
+          
         </table>
+        <div className="mb-3">
+          <button className="btn btn-success" onClick={handleExportCSV}>
+              Export to CSV
+          </button>
+        </div>
+        </>
       )}
     </div>
   );
