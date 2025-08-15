@@ -51,37 +51,36 @@ function Pledge() {
             {error && <div className="alert alert-danger">{error}</div>}
             <div className="mb-3">
               <label htmlFor="answer1" className="form-label">
-                Email Address
-              </label>
-              <input
-                className="form-control"
-                type="email"
-                aria-describedby="emailHelp"
-                value={answer1}
-                onChange={(e) => setAnswer1(e.target.value)}
-              />
-              <div id="emailHelp" className="form-text">
-                We'll never share your email with anyone else.
-              </div>
-            </div>
-            <div className="mb-3">
-              <label htmlFor="answer2" className="form-label">
-                First Name
+                What is your favorite color?
               </label>
               <input
                 className="form-control"
                 type="text"
+                placeholder="e.g. Blue"
+                value={answer1}
+                onChange={(e) => setAnswer1(e.target.value)}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="answer2" className="form-label">
+                What city were you born in?
+              </label>
+              <input
+                className="form-control"
+                type="text"
+                placeholder="e.g. New York"
                 value={answer2}
                 onChange={(e) => setAnswer2(e.target.value)}
               />
             </div>
             <div className="question3">
               <label htmlFor="answer3" className="form-label">
-                Last Name
+                What is your favorite hobby?
               </label>
               <input
                 className="form-control"
                 type="text"
+                placeholder="e.g. Painting"
                 value={answer3}
                 onChange={(e) => setAnswer3(e.target.value)}
               />
