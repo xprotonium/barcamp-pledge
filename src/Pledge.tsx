@@ -1,4 +1,5 @@
-import React, { useState, ChangeEvent, FormEvent, ReactElement } from "react";
+import { useState } from "react";
+import type { ChangeEvent, FormEvent, ReactElement } from "react";
 import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import type { DocumentData } from "firebase/firestore";

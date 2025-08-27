@@ -1,0 +1,1 @@
+{"root":["./src/admindashboard.tsx","./src/app.tsx","./src/login.tsx","./src/navbar.tsx","./src/pledge.tsx","./src/privateroute.tsx","./src/firebase.tsx","./src/main.tsx","./src/react-app-env.d.ts","./src/sanitize.ts","./src/vite-env.d.ts"],"version":"5.8.3"}

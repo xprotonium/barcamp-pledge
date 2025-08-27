@@ -12,10 +12,17 @@ import { useNavigate } from "react-router-dom";
 
 interface ResponseEntry {
   id: string;
-  answer1: string;
-  answer2: string;
-  answer3: string;
-  timestamp: any;
+  registered?: string;
+  fullName?: string;
+  phoneNumber?: string;
+  topic?: string;
+  track?: string;
+  description?: string;
+  sessionFormat?: string;
+  otherFormat?: string;
+  equipment?: string[];
+  otherEquipment?: string;
+  timestamp?: any;
 }
 
 function AdminDashboard() {
@@ -130,13 +137,31 @@ function AdminDashboard() {
 
     if (responses.length === 0) return;
 
-    const header = ["#", "Answer 1", "Answer 2", "Answer 3", "Timestamp"];
+    const header = [
+      "#",
+      "Registered",
+      "Full Name",
+      "Phone Number",
+      "Topic",
+      "Track",
+      "Description",
+      "Session Format",
+      "Equipment",
+      "Timestamp",
+    ];
     const rows = responses.map((entry, index) => [
       index + 1,
-      entry.answer1?.replace(/,/g, ""),
-      entry.answer2?.replace(/,/g, ""),
-      entry.answer3?.replace(/,/g, ""),
-      new Date(entry.timestamp?.seconds * 1000).toLocaleString(),
+      (entry.registered || "").replace(/,/g, ""),
+      (entry.fullName || "").replace(/,/g, ""),
+      (entry.phoneNumber || "").replace(/,/g, ""),
+      (entry.topic || "").replace(/,/g, ""),
+      (entry.track || "").replace(/,/g, ""),
+      (entry.description || "").replace(/,/g, ""),
+      (entry.sessionFormat || "").replace(/,/g, ""),
+      (entry.equipment?.join("; ") || "").replace(/,/g, ""),
+      entry.timestamp?.seconds
+        ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
+        : "",
     ]);
 
     const csvContent =
@@ -264,9 +289,14 @@ function AdminDashboard() {
           <thead>
             <tr>
               <th>#</th>
-              <th>Answer 1</th>
-              <th>Answer 2</th>
-              <th>Answer 3</th>
+              <th>Registered</th>
+              <th>Full Name</th>
+              <th>Phone Number</th>
+              <th>Topic</th>
+              <th>Track</th>
+              <th>Description</th>
+              <th>Session Format</th>
+              <th>Equipment</th>
               <th>Timestamp</th>
             </tr>
           </thead>
@@ -274,11 +304,18 @@ function AdminDashboard() {
             {responses.map((entry, index) => (
               <tr key={entry.id}>
                 <td>{index + 1}</td>
-                <td>{entry.answer1}</td>
-                <td>{entry.answer2}</td>
-                <td>{entry.answer3}</td>
+                <td>{entry.registered || ""}</td>
+                <td>{entry.fullName || ""}</td>
+                <td>{entry.phoneNumber || ""}</td>
+                <td>{entry.topic || ""}</td>
+                <td>{entry.track || ""}</td>
+                <td style={{whiteSpace: "pre-wrap"}}>{entry.description || ""}</td>
+                <td>{entry.sessionFormat || ""}</td>
+                <td>{entry.equipment?.join(", ") || ""}</td>
                 <td>
-                  {new Date(entry.timestamp?.seconds * 1000).toLocaleString()}
+                  {entry.timestamp?.seconds
+                    ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
+                    : ""}
                 </td>
               </tr>
             ))}
