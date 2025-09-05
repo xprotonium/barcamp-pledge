@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
-import {
-  signOut,
-  onAuthStateChanged,
-  updatePassword,
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-} from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { useNavigate } from "react-router-dom";
 
@@ -28,21 +22,12 @@ interface ResponseEntry {
 
 function AdminDashboard() {
   const [responses, setResponses] = useState<ResponseEntry[]>([]);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check authentication state
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setUserEmail(user.email);
         console.log("Admin dashboard - User authenticated:", user.email);
       } else {
         console.log("Admin dashboard - No user, redirecting to login");
@@ -69,70 +54,8 @@ function AdminDashboard() {
     return () => unsubscribe();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate("/login");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setPasswordError("");
-    setPasswordSuccess("");
 
-    // Validation
-    if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords do not match");
-      setLoading(false);
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters long");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const user = auth.currentUser;
-      if (!user || !userEmail) {
-        setPasswordError("User not found");
-        setLoading(false);
-        return;
-      }
-
-      // Re-authenticate user before password change
-      const credential = EmailAuthProvider.credential(
-        userEmail,
-        currentPassword
-      );
-      await reauthenticateWithCredential(user, credential);
-
-      // Update password
-      await updatePassword(user, newPassword);
-
-      setPasswordSuccess("Password updated successfully!");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPasswordForm(false);
-    } catch (error: any) {
-      console.error("Error updating password:", error);
-      if (error.code === "auth/wrong-password") {
-        setPasswordError("Current password is incorrect");
-      } else if (error.code === "auth/weak-password") {
-        setPasswordError("New password is too weak");
-      } else {
-        setPasswordError("Failed to update password. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleExportCSV = () => {
 
@@ -213,110 +136,9 @@ function AdminDashboard() {
 
   return (
     <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4 anim-fade-in-up">
-        <h2 className="mb-0">Pledge Submissions</h2>
-        <div className="d-flex align-items-center">
-          <span className="text-muted small me-3 d-none d-sm-inline">Logged in as: {userEmail}</span>
-          <div className="btn-group me-2" role="group">
-            <button
-              onClick={() => navigate("/approved")}
-              className="btn btn-outline-success transition-base"
-            >
-              Approved Topics
-            </button>
-            <button
-              onClick={() => setShowPasswordForm(!showPasswordForm)}
-              className="btn btn-outline-primary transition-base"
-            >
-              Change Password
-            </button>
-          </div>
-          <button onClick={handleLogout} className="btn btn-outline-danger transition-base">
-            Logout
-          </button>
-        </div>
-      </div>
-
-      {/* Password Change Form */}
-      <div className={`collapsible ${showPasswordForm ? "is-open" : ""}`}>
-        <div className="card mb-4">
-          <div className="card-body">
-            <h5 className="card-title">Change Password</h5>
-            {passwordError && (
-              <div className="alert alert-danger">{passwordError}</div>
-            )}
-            {passwordSuccess && (
-              <div className="alert alert-success">{passwordSuccess}</div>
-            )}
-            <form onSubmit={handlePasswordChange}>
-              <div className="mb-3">
-                <label htmlFor="currentPassword" className="form-label">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="currentPassword"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="newPassword" className="form-label">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="newPassword"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="confirmPassword" className="form-label">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="d-flex gap-2">
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? "Updating..." : "Update Password"}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setShowPasswordForm(false);
-                    setPasswordError("");
-                    setPasswordSuccess("");
-                    setCurrentPassword("");
-                    setNewPassword("");
-                    setConfirmPassword("");
-                  }}
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+      <div className="admin-header anim-fade-in-up">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+          <h2 className="mb-2 mb-md-0">Pledge Submissions</h2>
         </div>
       </div>
 
@@ -326,20 +148,21 @@ function AdminDashboard() {
         <>
         
         
+        {/* Desktop Table */}
         <div className="table-responsive anim-fade-in-up">
-        <table className="table table-striped table-hover align-middle">
+        <table className="table table-striped table-hover align-middle table-mobile-optimized">
           <thead>
             <tr>
               <th>#</th>
               <th>Registered</th>
               <th>Full Name</th>
-              <th>Phone Number</th>
+              <th>Phone</th>
               <th>Topic</th>
               <th>Track</th>
               <th>Description</th>
-              <th>Session Format</th>
+              <th>Format</th>
               <th>Equipment</th>
-              <th>Timestamp</th>
+              <th>Time</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -347,20 +170,20 @@ function AdminDashboard() {
             {responses.map((entry, index) => (
               <tr key={entry.id} className="anim-fade-in">
                 <td>{index + 1}</td>
-                <td>{entry.registered || ""}</td>
-                <td>{entry.fullName || ""}</td>
-                <td>{entry.phoneNumber || ""}</td>
-                <td>{entry.topic || ""}</td>
-                <td>{entry.track || ""}</td>
-                <td style={{whiteSpace: "pre-wrap"}}>{entry.description || ""}</td>
-                <td>{entry.sessionFormat || ""}</td>
-                <td>{entry.equipment?.join(", ") || ""}</td>
-                <td>
+                <td title={entry.registered || ""}>{entry.registered || ""}</td>
+                <td title={entry.fullName || ""}>{entry.fullName || ""}</td>
+                <td title={entry.phoneNumber || ""}>{entry.phoneNumber || ""}</td>
+                <td title={entry.topic || ""}>{entry.topic || ""}</td>
+                <td title={entry.track || ""}>{entry.track || ""}</td>
+                <td className="description-cell" title={entry.description || ""}>{entry.description || ""}</td>
+                <td title={entry.sessionFormat || ""}>{entry.sessionFormat || ""}</td>
+                <td title={entry.equipment?.join(", ") || ""}>{entry.equipment?.join(", ") || ""}</td>
+                <td title={entry.timestamp?.seconds ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : ""}>
                   {entry.timestamp?.seconds
-                    ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
+                    ? new Date(entry.timestamp.seconds * 1000).toLocaleDateString()
                     : ""}
                 </td>
-                <td>
+                <td className="actions-cell">
                   {entry.approved ? (
                     <div className="d-flex align-items-center gap-2">
                       <span className="badge bg-success">Approved</span>
@@ -416,6 +239,93 @@ function AdminDashboard() {
             ))}
           </tbody>
         </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="mobile-cards anim-fade-in-up">
+          {responses.map((entry, index) => (
+            <div key={entry.id} className="mobile-card anim-fade-in">
+              <div className="mobile-card-header">
+                <h6 className="mobile-card-title">#{index + 1} - {entry.fullName || "Unknown"}</h6>
+                {entry.approved ? (
+                  <span className="badge bg-success mobile-card-badge">Approved</span>
+                ) : (
+                  <span className="badge bg-secondary mobile-card-badge">Pending</span>
+                )}
+              </div>
+              <div className="mobile-card-body">
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Registered</div>
+                  <div className="mobile-card-value">{entry.registered || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Phone</div>
+                  <div className="mobile-card-value">{entry.phoneNumber || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Topic</div>
+                  <div className="mobile-card-value">{entry.topic || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Track</div>
+                  <div className="mobile-card-value">{entry.track || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Session Format</div>
+                  <div className="mobile-card-value">{entry.sessionFormat || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Equipment</div>
+                  <div className="mobile-card-value">{entry.equipment?.join(", ") || "None"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Description</div>
+                  <div className="mobile-card-description">{entry.description || "No description provided"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Submitted</div>
+                  <div className="mobile-card-value">
+                    {entry.timestamp?.seconds
+                      ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
+                      : "Unknown"}
+                  </div>
+                </div>
+              </div>
+              <div className="mobile-card-actions">
+                {entry.approved ? (
+                  <>
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => handleUnapprove(entry.id)}
+                    >
+                      Unapprove
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handleDelete(entry.id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-sm btn-outline-success"
+                      onClick={() => handleApprove(entry.id)}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handleDelete(entry.id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
         <div className="mb-3">
           <button className="btn btn-success" onClick={handleExportCSV}>

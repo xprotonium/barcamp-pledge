@@ -109,15 +109,16 @@ function ApprovedTopics() {
         <div className="alert alert-info">No approved topics yet.</div>
       ) : (
         <>
+        {/* Desktop Table */}
         <div className="table-responsive anim-fade-in-up">
-          <table className="table table-striped table-hover align-middle">
+          <table className="table table-striped table-hover align-middle table-mobile-optimized">
             <thead className="table-light">
               <tr>
                 <th>#</th>
-                <th>Full Name</th>
+                <th>Name</th>
                 <th>Topic</th>
                 <th>Track</th>
-                <th>Session Format</th>
+                <th>Format</th>
                 <th>Description</th>
                 {isAdmin && <th>Actions</th>}
               </tr>
@@ -126,13 +127,13 @@ function ApprovedTopics() {
               {responses.map((entry, index) => (
                 <tr key={entry.id} className="anim-fade-in">
                   <td>{index + 1}</td>
-                  <td>{entry.fullName || ""}</td>
-                  <td>{entry.topic || ""}</td>
-                  <td>{entry.track || ""}</td>
-                  <td>{entry.sessionFormat || ""}</td>
-                  <td style={{ whiteSpace: "pre-wrap" }}>{entry.description || ""}</td>
+                  <td title={entry.fullName || ""}>{entry.fullName || ""}</td>
+                  <td title={entry.topic || ""}>{entry.topic || ""}</td>
+                  <td title={entry.track || ""}>{entry.track || ""}</td>
+                  <td title={entry.sessionFormat || ""}>{entry.sessionFormat || ""}</td>
+                  <td className="description-cell" title={entry.description || ""}>{entry.description || ""}</td>
                   {isAdmin && (
-                    <td>
+                    <td className="actions-cell">
                       <button
                         className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
                         title="Unapprove"
@@ -149,6 +150,46 @@ function ApprovedTopics() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="mobile-cards anim-fade-in-up">
+          {responses.map((entry, index) => (
+            <div key={entry.id} className="mobile-card anim-fade-in">
+              <div className="mobile-card-header">
+                <h6 className="mobile-card-title">#{index + 1} - {entry.fullName || "Unknown"}</h6>
+                <span className="badge bg-success mobile-card-badge">Approved</span>
+              </div>
+              <div className="mobile-card-body">
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Topic</div>
+                  <div className="mobile-card-value">{entry.topic || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Track</div>
+                  <div className="mobile-card-value">{entry.track || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Session Format</div>
+                  <div className="mobile-card-value">{entry.sessionFormat || "N/A"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Description</div>
+                  <div className="mobile-card-description">{entry.description || "No description provided"}</div>
+                </div>
+              </div>
+              {isAdmin && (
+                <div className="mobile-card-actions">
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => handleUnapprove(entry.id)}
+                  >
+                    Unapprove
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
         <div className="mb-3">
           <button className="btn btn-success" onClick={handleExportCSV} disabled={responses.length === 0}>
