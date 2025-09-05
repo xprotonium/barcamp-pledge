@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import {
   signOut,
   onAuthStateChanged,
@@ -23,6 +23,7 @@ interface ResponseEntry {
   equipment?: string[];
   otherEquipment?: string;
   timestamp?: any;
+  approved?: boolean;
 }
 
 function AdminDashboard() {
@@ -177,27 +178,67 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
+  const handleApprove = async (entryId: string) => {
+    try {
+      const ref = doc(db, "pledgeResponses", entryId);
+      await updateDoc(ref, { approved: true });
+      setResponses((prev) => prev.map((r) => (r.id === entryId ? { ...r, approved: true } : r)));
+    } catch (error) {
+      console.error("Error approving topic:", error);
+    }
+  };
+
+  const handleUnapprove = async (entryId: string) => {
+    try {
+      const ref = doc(db, "pledgeResponses", entryId);
+      await updateDoc(ref, { approved: false });
+      setResponses((prev) => prev.map((r) => (r.id === entryId ? { ...r, approved: false } : r)));
+    } catch (error) {
+      console.error("Error unapproving topic:", error);
+    }
+  };
+
+  const handleDelete = async (entryId: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this submission? This cannot be undone.");
+    if (!confirmed) return;
+    try {
+      const ref = doc(db, "pledgeResponses", entryId);
+      await deleteDoc(ref);
+      setResponses((prev) => prev.filter((r) => r.id !== entryId));
+    } catch (error) {
+      console.error("Error deleting submission:", error);
+    }
+  };
+
 
   return (
     <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Pledge Submissions</h2>
-        <div>
-          <span className="me-3">Logged in as: {userEmail}</span>
-          <button
-            onClick={() => setShowPasswordForm(!showPasswordForm)}
-            className="btn btn-outline-primary me-2"
-          >
-            Change Password
-          </button>
-          <button onClick={handleLogout} className="btn btn-outline-danger">
+      <div className="d-flex justify-content-between align-items-center mb-4 anim-fade-in-up">
+        <h2 className="mb-0">Pledge Submissions</h2>
+        <div className="d-flex align-items-center">
+          <span className="text-muted small me-3 d-none d-sm-inline">Logged in as: {userEmail}</span>
+          <div className="btn-group me-2" role="group">
+            <button
+              onClick={() => navigate("/approved")}
+              className="btn btn-outline-success transition-base"
+            >
+              Approved Topics
+            </button>
+            <button
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
+              className="btn btn-outline-primary transition-base"
+            >
+              Change Password
+            </button>
+          </div>
+          <button onClick={handleLogout} className="btn btn-outline-danger transition-base">
             Logout
           </button>
         </div>
       </div>
 
       {/* Password Change Form */}
-      {showPasswordForm && (
+      <div className={`collapsible ${showPasswordForm ? "is-open" : ""}`}>
         <div className="card mb-4">
           <div className="card-body">
             <h5 className="card-title">Change Password</h5>
@@ -277,15 +318,16 @@ function AdminDashboard() {
             </form>
           </div>
         </div>
-      )}
+      </div>
 
       {responses.length === 0 ? (
-        <div className="alert alert-info">No pledge responses yet.</div>
+        <div className="alert alert-info anim-fade-in">No pledge responses yet.</div>
       ) : (
         <>
         
         
-        <table className="table table-bordered">
+        <div className="table-responsive anim-fade-in-up">
+        <table className="table table-striped table-hover align-middle">
           <thead>
             <tr>
               <th>#</th>
@@ -298,11 +340,12 @@ function AdminDashboard() {
               <th>Session Format</th>
               <th>Equipment</th>
               <th>Timestamp</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {responses.map((entry, index) => (
-              <tr key={entry.id}>
+              <tr key={entry.id} className="anim-fade-in">
                 <td>{index + 1}</td>
                 <td>{entry.registered || ""}</td>
                 <td>{entry.fullName || ""}</td>
@@ -317,11 +360,63 @@ function AdminDashboard() {
                     ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
                     : ""}
                 </td>
+                <td>
+                  {entry.approved ? (
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="badge bg-success">Approved</span>
+                      <button
+                        className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                        title="Unapprove"
+                        onClick={() => handleUnapprove(entry.id)}
+                        style={{ width: 28, height: 28 }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                        title="Delete"
+                        onClick={() => handleDelete(entry.id)}
+                        style={{ width: 28, height: 28 }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M5.5 5.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0v-6zm2-.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5z"/>
+                          <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5h6h2.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3a.5.5 0 0 0 0 1H5h6h2.5a.5.5 0 0 0 0-1H11 5 2.5z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="d-flex align-items-center gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
+                        title="Approve"
+                        onClick={() => handleApprove(entry.id)}
+                        style={{ width: 28, height: 28 }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M13.485 1.929a1.5 1.5 0 0 1 0 2.121l-6.364 6.364a1.5 1.5 0 0 1-2.121 0L.793 6.227a1 1 0 1 1 1.414-1.414l2.536 2.536a.5.5 0 0 0 .707 0l5.657-5.657a1.5 1.5 0 0 1 2.121 0z"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                        title="Delete"
+                        onClick={() => handleDelete(entry.id)}
+                        style={{ width: 28, height: 28 }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M5.5 5.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0v-6zm2-.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5z"/>
+                          <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5h6h2.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3a.5.5 0 0 0 0 1H5h6h2.5a.5.5 0 0 0 0-1H11 5 2.5z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
-          
         </table>
+        </div>
         <div className="mb-3">
           <button className="btn btn-success" onClick={handleExportCSV}>
               Export to CSV

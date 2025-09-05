@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Pledge from "./Pledge";
 import AdminDashboard from "./AdminDashboard";
+import ApprovedTopics from "./ApprovedTopics";
 import Login from "./Login";
 import PrivateRoute from "./PrivateRoute";
 import Navbar from "./Navbar";
@@ -17,6 +18,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Pledge />} />
+          <Route path="/approved" element={<ApprovedTopics />} />
           <Route
             path="/admin"
             element={
