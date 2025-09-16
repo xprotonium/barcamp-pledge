@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { auth } from "./firebase";
 import barcampLogo from "./assets/barcamp-logo.png";
@@ -18,6 +18,10 @@ function Navbar() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const accountBtnRef = useRef<HTMLButtonElement | null>(null);
+  const collapseRef = useRef<HTMLDivElement | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -39,9 +43,20 @@ function Navbar() {
       }
     };
 
+    const handleViewport = () => {
+      setIsMobile(window.innerWidth < 992); // Bootstrap lg breakpoint
+    };
+
+    // No manual positioning needed for the dropdown when using absolute within a relative parent
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    window.addEventListener('resize', handleViewport);
+    handleViewport();
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', handleViewport);
+    };
+  }, [showDropdown]);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -148,84 +163,183 @@ function Navbar() {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light">
+    <nav className="navbar navbar-expand-lg navbar-light bg-light sticky-top" style={{ zIndex: 1030 }}>
       <div className="container-fluid">
         <Link to="/" className="navbar-brand">
           <img
             src={barcampLogo}
             alt="BarCamp Logo"
-            style={{ height: "40px" }}
+            style={{ height: "clamp(28px, 5vw, 40px)", width: "auto" }}
           />
         </Link>
-        <div className="navbar-nav ms-auto d-flex align-items-center">
-          {user ? (
-            <>
-              <Link 
-                to="/admin" 
-                className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
-              >
-                Admin Dashboard
-              </Link>
-              <Link 
-                to="/approved" 
-                className={`nav-link ${isActive('/approved') ? 'active' : ''}`}
-              >
-                Approved Topics
-              </Link>
-              <div className="navbar-dropdown">
-                <button
-                  className="btn dropdown-toggle"
-                  type="button"
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  aria-expanded={showDropdown}
-                >
-                  {user?.displayName || "My Account"}
-                </button>
-                <div className={`dropdown-menu ${showDropdown ? 'show' : ''}`} style={{ right: 0, left: 'auto' }}>
-                  <div className="dropdown-item-text">
-                    <small className="text-muted">{user?.email}</small>
-                  </div>
-                  <div className="dropdown-divider"></div>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      setShowNameForm(!showNameForm);
-                      setShowDropdown(false);
-                    }}
-                  >
-                    Change Name
-                  </button>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      setShowPasswordForm(!showPasswordForm);
-                      setShowDropdown(false);
-                    }}
-                  >
-                    Change Password
-                  </button>
-                  <div className="dropdown-divider"></div>
-                  <button
-                    className="dropdown-item text-danger"
-                    onClick={() => {
-                      handleLogout();
-                      setShowDropdown(false);
-                    }}
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <Link 
-              to="/login" 
-              className={`nav-link ${isActive('/login') ? 'active fw-bold' : ''}`}
+        <button
+          className="navbar-toggler"
+          type="button"
+          aria-controls="navbarSupportedContent"
+          aria-expanded={menuOpen}
+          aria-label="Toggle navigation"
+          onClick={() => {
+            setMenuOpen((v) => !v);
+            setShowDropdown(false);
+          }}
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        {(() => {
+          const showCollapse = (isMobile && menuOpen) || (!isMobile);
+          const animatedStyle = isMobile
+            ? {
+                overflow: 'hidden',
+                maxHeight: menuOpen ? 600 : 0,
+                opacity: menuOpen ? 1 : 0,
+                transition: 'max-height 220ms ease, opacity 180ms ease'
+              }
+            : undefined;
+          const mobileItemStyle = isMobile ? { width: '92%', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', marginBottom: 6 } : undefined;
+          return (
+            <div
+              id="navbarSupportedContent"
+              ref={collapseRef}
+              className={`${isMobile ? 'navbar-collapse' : 'collapse navbar-collapse'} ${!isMobile && showCollapse ? 'show' : ''}`}
+              style={animatedStyle as any}
             >
-              Login
-            </Link>
-          )}
-        </div>
+              <div className={`navbar-nav ms-auto d-flex ${isMobile ? 'flex-column align-items-stretch' : 'align-items-center'}`}>
+                {/* Public link visible to everyone */}
+                <Link 
+                  to="/topics" 
+                  className={`nav-link ${isActive('/topics') ? 'active' : ''} ${isMobile ? 'text-center' : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                  style={mobileItemStyle as any}
+                >
+                  Approved Topics
+                </Link>
+                {user ? (
+                  <>
+                    <Link 
+                      to="/admin" 
+                      className={`nav-link ${isActive('/admin') ? 'active' : ''} ${isMobile ? 'text-center' : ''}`}
+                      onClick={() => setMenuOpen(false)}
+                      style={mobileItemStyle as any}
+                    >
+                      Admin Dashboard
+                    </Link>
+                    {isMobile ? (
+                      <div className="w-100 mt-2 d-flex flex-column align-items-center">
+                        <div className="w-100 my-2" style={{ borderTop: '1px solid rgba(0,0,0,0.12)' }}></div>
+                        <div className="text-muted small mb-2 text-center w-100" style={mobileItemStyle as any}>{user?.email}</div>
+                        <div className="nav flex-column w-100 align-items-center">
+                          <button
+                            type="button"
+                            className="nav-link text-center"
+                            onClick={() => {
+                              setShowNameForm(true);
+                              setMenuOpen(false);
+                            }}
+                            style={mobileItemStyle as any}
+                          >
+                            Change Name
+                          </button>
+                          <button
+                            type="button"
+                            className="nav-link text-center"
+                            onClick={() => {
+                              setShowPasswordForm(true);
+                              setMenuOpen(false);
+                            }}
+                            style={mobileItemStyle as any}
+                          >
+                            Change Password
+                          </button>
+                          <button
+                            type="button"
+                            className="nav-link text-center text-danger"
+                            onClick={() => {
+                              handleLogout();
+                              setMenuOpen(false);
+                            }}
+                            style={mobileItemStyle as any}
+                          >
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="nav-item dropdown navbar-dropdown" style={{ position: 'relative' }}>
+                        <button
+                          className="nav-link dropdown-toggle"
+                          type="button"
+                          ref={accountBtnRef}
+                          onClick={() => setShowDropdown(!showDropdown)}
+                          aria-expanded={showDropdown}
+                        >
+                          {user?.displayName || "My Account"}
+                        </button>
+                        <div
+                          className="dropdown-menu dropdown-menu-end"
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            left: 'auto',
+                            minWidth: 260,
+                            zIndex: 2000,
+                            display: showDropdown ? 'block' : 'none',
+                            opacity: showDropdown ? 1 : 0,
+                            transform: showDropdown ? 'translateY(0px)' : 'translateY(-6px)',
+                            transition: 'opacity 140ms ease, transform 180ms ease',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                          }}
+                        >
+                          <div className="dropdown-item-text">
+                            <small className="text-muted">{user?.email}</small>
+                          </div>
+                          <div className="dropdown-divider"></div>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              setShowNameForm(true);
+                              setShowDropdown(false);
+                            }}
+                          >
+                            Change Name
+                          </button>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              setShowPasswordForm(true);
+                              setShowDropdown(false);
+                            }}
+                          >
+                            Change Password
+                          </button>
+                          <div className="dropdown-divider"></div>
+                          <button
+                            className="dropdown-item text-danger"
+                            onClick={() => {
+                              handleLogout();
+                              setShowDropdown(false);
+                            }}
+                          >
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link 
+                    to="/login" 
+                    className={`nav-link ${isActive('/login') ? 'active fw-bold' : ''} ${isMobile ? 'w-100 text-center' : ''}`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Name Change Form Modal */}

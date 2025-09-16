@@ -17,6 +17,7 @@ interface FormData {
   otherFormat: string;
   equipment: string[];
   otherEquipment: string;
+  materialLink?: string;
 }
 
 function Pledge(): ReactElement {
@@ -30,7 +31,8 @@ function Pledge(): ReactElement {
     sessionFormat: "",
     otherFormat: "",
     equipment: [],
-    otherEquipment: ""
+    otherEquipment: "",
+    materialLink: ""
   });
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -53,11 +55,12 @@ function Pledge(): ReactElement {
     }));
   };
 
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Validate required fields
-    const { registered, fullName, phoneNumber, topic, track, description, sessionFormat, otherFormat, equipment } = formData;
+    const { registered, fullName, phoneNumber, topic, track, description, sessionFormat, otherFormat, equipment, materialLink } = formData;
     
     if (!registered || !fullName || !phoneNumber || !topic || !track || !description || !sessionFormat) {
       setError("Please fill in all required fields.");
@@ -74,6 +77,15 @@ function Pledge(): ReactElement {
       return;
     }
 
+    // Validate link if provided (optional field)
+    if (materialLink) {
+      const urlOk = /^(https?:\/\/).+/.test(materialLink.trim());
+      if (!urlOk) {
+        setError("Please provide a valid URL starting with http or https.");
+        return;
+      }
+    }
+
     setError("");
     
     try {
@@ -85,7 +97,10 @@ function Pledge(): ReactElement {
         // Add other equipment to equipment array if specified
         equipment: equipment.includes("other") 
           ? [...equipment.filter((item: string) => item !== "other"), `Other: ${formData.otherEquipment}`]
-          : equipment
+          : equipment,
+        materials: materialLink?.trim()
+          ? { type: "link", url: materialLink.trim() }
+          : undefined
       };
 
       await addDoc(collection(db, "pledgeResponses"), submissionData);
@@ -159,6 +174,16 @@ function Pledge(): ReactElement {
                   No
                 </label>
               </div>
+              {formData.registered === "No" && (
+                <div className="alert alert-info mt-2 anim-fade-in" style={{ backgroundColor: '#e9f4ff', borderColor: '#cfe7ff' }}>
+                  <small>
+                    Do not forget to register through this link: {" "}
+                    <a href="https://luma.com/383ji31c?tk=UZDCSO" target="_blank" rel="noreferrer">
+                      https://luma.com/383ji31c?tk=UZDCSO
+                    </a>
+                  </small>
+                </div>
+              )}
             </div>
 
             {/* Question 2 */}
@@ -365,6 +390,20 @@ function Pledge(): ReactElement {
                   />
                 )}
               </div>
+            </div>
+
+            {/* Question 9 */}
+            <div className="mb-4 anim-fade-in-up" style={{ animationDelay: '340ms' }}>
+              <label className="form-label fw-bold">9. Slide deck or resource link (optional)</label>
+              <input
+                type="url"
+                className="form-control mt-2 anim-fade-in"
+                name="materialLink"
+                placeholder="https://example.com/your-slides"
+                value={formData.materialLink}
+                onChange={handleChange}
+              />
+              <div className="form-text">Provide a public link to your slides or resources.</div>
             </div>
 
             <div className="d-grid gap-2 d-md-flex justify-content-md-end mt-4 anim-fade-in-up" style={{ animationDelay: '360ms' }}>

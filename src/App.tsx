@@ -9,6 +9,7 @@ const Login = lazy(() => import("./Login"));
 const PrivateRoute = lazy(() => import("./PrivateRoute"));
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
 const ApprovedTopics = lazy(() => import("./ApprovedTopics"));
+const Topics = lazy(() => import("./Topics"));
 
 function App() {
   const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || "")
@@ -34,6 +35,14 @@ function App() {
             element={
               <Suspense fallback={<LoadingSpinner />}>
                 <ApprovedTopics />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/topics" 
+            element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <Topics />
               </Suspense>
             } 
           />

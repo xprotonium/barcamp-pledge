@@ -18,10 +18,12 @@ interface ResponseEntry {
   otherEquipment?: string;
   timestamp?: any;
   approved?: boolean;
+  materials?: { type?: string; url?: string; name?: string };
 }
 
 function AdminDashboard() {
   const [responses, setResponses] = useState<ResponseEntry[]>([]);
+  const [filter, setFilter] = useState<"all" | "approved">("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,8 +60,8 @@ function AdminDashboard() {
 
 
   const handleExportCSV = () => {
-
-    if (responses.length === 0) return;
+    const filtered = filter === "approved" ? responses.filter((r) => r.approved) : responses;
+    if (filtered.length === 0) return;
 
     const header = [
       "#",
@@ -71,9 +73,10 @@ function AdminDashboard() {
       "Description",
       "Session Format",
       "Equipment",
+      "Materials",
       "Timestamp",
     ];
-    const rows = responses.map((entry, index) => [
+    const rows = filtered.map((entry, index) => [
       index + 1,
       (entry.registered || "").replace(/,/g, ""),
       (entry.fullName || "").replace(/,/g, ""),
@@ -83,6 +86,7 @@ function AdminDashboard() {
       (entry.description || "").replace(/,/g, ""),
       (entry.sessionFormat || "").replace(/,/g, ""),
       (entry.equipment?.join("; ") || "").replace(/,/g, ""),
+      (entry.materials?.url || "").replace(/,/g, ""),
       entry.timestamp?.seconds
         ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
         : "",
@@ -139,6 +143,19 @@ function AdminDashboard() {
       <div className="admin-header anim-fade-in-up">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
           <h2 className="mb-2 mb-md-0">Pledge Submissions</h2>
+          <div className="d-flex align-items-center gap-2 mt-2 mt-md-0">
+            <label htmlFor="filterSelect" className="form-label mb-0 me-2">Filter:</label>
+            <select
+              id="filterSelect"
+              className="form-select"
+              style={{ width: "200px" }}
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as "all" | "approved")}
+            >
+              <option value="all">All</option>
+              <option value="approved">Approved only</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -162,12 +179,13 @@ function AdminDashboard() {
               <th>Description</th>
               <th>Format</th>
               <th>Equipment</th>
+              <th>Materials</th>
               <th>Time</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {responses.map((entry, index) => (
+            {(filter === "approved" ? responses.filter((r) => r.approved) : responses).map((entry, index) => (
               <tr key={entry.id} className="anim-fade-in">
                 <td>{index + 1}</td>
                 <td title={entry.registered || ""}>{entry.registered || ""}</td>
@@ -178,6 +196,22 @@ function AdminDashboard() {
                 <td className="description-cell" title={entry.description || ""}>{entry.description || ""}</td>
                 <td title={entry.sessionFormat || ""}>{entry.sessionFormat || ""}</td>
                 <td title={entry.equipment?.join(", ") || ""}>{entry.equipment?.join(", ") || ""}</td>
+                <td>
+                  {entry.materials?.url ? (
+                    <a
+                      href={entry.materials.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={entry.materials.url}
+                    >
+                      {entry.materials.type === "file"
+                        ? (entry.materials.name || "View file")
+                        : "Open link"}
+                    </a>
+                  ) : (
+                    <span className="text-muted">None</span>
+                  )}
+                </td>
                 <td title={entry.timestamp?.seconds ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : ""}>
                   {entry.timestamp?.seconds
                     ? new Date(entry.timestamp.seconds * 1000).toLocaleDateString()
@@ -243,7 +277,7 @@ function AdminDashboard() {
 
         {/* Mobile Cards */}
         <div className="mobile-cards anim-fade-in-up">
-          {responses.map((entry, index) => (
+          {(filter === "approved" ? responses.filter((r) => r.approved) : responses).map((entry, index) => (
             <div key={entry.id} className="mobile-card anim-fade-in">
               <div className="mobile-card-header">
                 <h6 className="mobile-card-title">#{index + 1} - {entry.fullName || "Unknown"}</h6>
@@ -277,6 +311,18 @@ function AdminDashboard() {
                 <div className="mobile-card-row">
                   <div className="mobile-card-label">Equipment</div>
                   <div className="mobile-card-value">{entry.equipment?.join(", ") || "None"}</div>
+                </div>
+                <div className="mobile-card-row">
+                  <div className="mobile-card-label">Materials</div>
+                  <div className="mobile-card-value">
+                    {entry.materials?.url ? (
+                      <a href={entry.materials.url} target="_blank" rel="noreferrer">
+                        {entry.materials.type === "file" ? (entry.materials.name || "View file") : "Open link"}
+                      </a>
+                    ) : (
+                      "None"
+                    )}
+                  </div>
                 </div>
                 <div className="mobile-card-row">
                   <div className="mobile-card-label">Description</div>

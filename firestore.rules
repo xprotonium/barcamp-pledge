@@ -2,14 +2,12 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Public write access to submit form
     match /pledgeResponses/{docId} {
-      // Users (not logged in) can write, but can't read
+      // Anyone can submit
       allow write: if true;
 
-      // Any authenticated user can read
-      allow read: if request.auth != null;
+      // Authenticated users can read everything; guests can read ONLY approved docs
+      allow read: if request.auth != null || resource.data.approved == true;
     }
   }
 }
