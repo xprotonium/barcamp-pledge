@@ -97,17 +97,18 @@ function Pledge(): ReactElement {
         // Add other equipment to equipment array if specified
         equipment: equipment.includes("other") 
           ? [...equipment.filter((item: string) => item !== "other"), `Other: ${formData.otherEquipment}`]
-          : equipment,
-        materials: materialLink?.trim()
-          ? { type: "link", url: materialLink.trim() }
-          : undefined
+          : equipment
       };
+
+      if (materialLink?.trim()) {
+        (submissionData as any).materials = { type: "link", url: materialLink.trim() };
+      }
 
       await addDoc(collection(db, "pledgeResponses"), submissionData);
       setSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting response:", error);
-      setError("An error occurred while submitting your response. Please try again.");
+      setError(error?.message || "An error occurred while submitting your response. Please try again.");
     }
   };
 
