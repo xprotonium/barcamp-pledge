@@ -346,20 +346,46 @@ body {
 }
 
 .table-mobile-optimized th,
+/* Enhanced table styling with proper text wrapping */
 .table-mobile-optimized td {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
-    padding: 0.5rem 0.75rem;
+    white-space: normal;
+    word-wrap: break-word;
+    padding: 1rem 0.75rem;
+    vertical-align: top;
+}
+
+.table-mobile-optimized .topic-cell {
+    max-width: 250px;
+    word-wrap: break-word;
+    white-space: normal;
+    line-height: 1.4;
+}
+
+.table-mobile-optimized .name-cell {
+    max-width: 150px;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 .table-mobile-optimized .description-cell {
     white-space: normal;
     max-width: 300px;
-    max-height: 100px;
+    max-height: 120px;
     overflow-y: auto;
     word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.table-mobile-optimized .format-cell {
+    max-width: 120px;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.table-mobile-optimized .track-cell {
+    max-width: 100px;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 .table-mobile-optimized .actions-cell {
@@ -419,6 +445,8 @@ body {
     color: #212529;
     margin: 0;
     font-size: 1.1rem;
+    word-wrap: break-word;
+    line-height: 1.3;
 }
 
 .mobile-card-badge {
@@ -426,6 +454,7 @@ body {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-weight: 600;
+    flex-shrink: 0;
 }
 
 .mobile-card-body {
@@ -453,6 +482,7 @@ body {
     color: #212529;
     word-wrap: break-word;
     font-weight: 500;
+    line-height: 1.4;
 }
 
 .mobile-card-description {
@@ -513,13 +543,87 @@ body {
     }
 }
 
+/* Admin Dashboard Styling */
+.admin-header-modern {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-header-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+    background-size: 200% 100%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Admin table specific styling */
+.admin-table .registered-cell,
+.admin-table .phone-cell {
+    font-size: 0.875rem;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.admin-table .equipment-cell {
+    max-width: 180px;
+    word-wrap: break-word;
+    white-space: normal;
+    font-size: 0.875rem;
+    line-height: 1.3;
+}
+
+.admin-table .materials-cell {
+    text-align: center;
+}
+
+.admin-table .materials-cell a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.admin-table .materials-cell a:hover {
+    text-decoration: underline;
+}
+
+.admin-table .actions-cell {
+    white-space: nowrap;
+}
+
+.admin-table .actions-cell .btn {
+    border-radius: 8px;
+}
+
 /* Admin header mobile optimizations */
 .admin-header {
-    background: white;
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .admin-actions {
@@ -530,8 +634,8 @@ body {
 }
 
 @media (max-width: 768px) {
-    .admin-header {
-        padding: 0.75rem;
+    .admin-header, .admin-header-modern {
+        padding: 1rem;
         margin: -1rem -1rem 1rem -1rem;
         border-radius: 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -540,22 +644,32 @@ body {
     .admin-actions {
         width: 100%;
         align-items: stretch;
+        flex-direction: column;
+        gap: 1rem;
     }
     
-    .admin-actions .btn-group {
+    .admin-actions > div {
         width: 100%;
     }
     
-    .admin-actions .btn-group .btn {
-        flex: 1;
-        font-size: 0.875rem;
-        padding: 0.5rem 0.75rem;
-    }
-    
-    .admin-actions .btn:not(.btn-group .btn) {
+    .admin-actions .btn {
         width: 100%;
         font-size: 0.875rem;
-        padding: 0.5rem 0.75rem;
+        padding: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .nav-link {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem;
     }
     
     /* Mobile Navbar Adjustments */
@@ -608,7 +722,15 @@ body {
     .admin-actions {
         flex-direction: row;
         align-items: center;
-        gap: 1rem;
+        gap: 1.5rem;
+    }
+    
+    .mobile-cards {
+        display: none;
+    }
+    
+    .table-responsive {
+        display: block;
     }
 }
   

@@ -118,7 +118,7 @@ function Pledge(): ReactElement {
         <div className="w-100 px-3" style={{ maxWidth: "600px" }}>
           <div className="card shadow p-4 text-center anim-scale-in">
             <h3 className="text-success mb-4">Thank You!</h3>
-            <p>Your BarCamp 2025 pledge form has been submitted successfully.</p>
+            <p>Your BarCamp Cyberjaya 2025 pledge form has been submitted successfully.</p>
             <p>We'll review your submission and get back to you soon.</p>
           </div>
         </div>
@@ -136,7 +136,7 @@ function Pledge(): ReactElement {
             className="img-fluid rounded anim-fade-in-up"
             style={{ maxHeight: '200px' }}
           />
-          <h2 className="mt-4 anim-fade-in-up" style={{ animationDelay: '80ms' }}>BarCamp 2025 Pledge Form</h2>
+          <h2 className="mt-4 anim-fade-in-up" style={{ animationDelay: '80ms' }}>BarCamp Cyberjaya 2025 Pledge Form</h2>
         </div>
         
         <div className="card shadow p-3 p-md-4 anim-scale-in">
@@ -145,7 +145,7 @@ function Pledge(): ReactElement {
           <form onSubmit={handleSubmit}>
             {/* Question 1 */}
             <div className="mb-4 anim-fade-in-up" style={{ animationDelay: '40ms' }}>
-              <label className="form-label fw-bold">1. Before proceeding, have you registered first for BarCamp 2025? <span className="text-danger">*</span></label>
+              <label className="form-label fw-bold">1. Before proceeding, have you registered first for BarCamp Cyberjaya 2025? <span className="text-danger">*</span></label>
               <div className="form-check">
                 <input
                   className="form-check-input"
