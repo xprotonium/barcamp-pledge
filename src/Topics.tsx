@@ -33,17 +33,30 @@ function Topics() {
   }, []);
 
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4 anim-fade-in-up">
-        <h2 className="mb-0">Approved Topics</h2>
-      </div>
+    <div className="min-vh-100 p-3 p-md-4 anim-fade-in">
+      <div className="container" style={{ maxWidth: "1800px" }}>
+        <div className="mb-5 text-center">
+          <h1 className="mb-3 anim-fade-in-up fw-bold">Approved Topics</h1>
+          <p className="lead text-muted anim-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            Discover the amazing topics being presented at BarCamp Cyberjaya 2025
+          </p>
+        </div>
 
-      {error && (
-        <div className="alert alert-danger anim-fade-in">{error}</div>
-      )}
-      {!error && responses.length === 0 ? (
-        <div className="alert alert-info">No topics yet.</div>
-      ) : !error ? (
+        {error && (
+          <div className="alert alert-danger anim-fade-in">{error}</div>
+        )}
+        {!error && responses.length === 0 ? (
+          <div className="card text-center">
+            <div className="card-body p-5">
+              <svg width="64" height="64" fill="currentColor" className="text-muted mb-3" viewBox="0 0 16 16">
+                <path d="M6 .5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H9v1.07a7.001 7.001 0 0 1 3.274 12.474l-.974-.975A6 6 0 0 0 8.5 2.18V3.5a.5.5 0 0 1-.5.5H6.5a.5.5 0 0 1-.5-.5V2.18A6 6 0 0 0 3.274 13.074l-.974.975A7.001 7.001 0 0 1 6 1.57V1.5z"/>
+                <path d="M8 8a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0V9H6.5a.5.5 0 0 1 0-1H8z"/>
+              </svg>
+              <h4 className="text-muted">No approved topics yet</h4>
+              <p className="text-muted">Check back soon for exciting presentations!</p>
+            </div>
+          </div>
+        ) : !error ? (
         <>
         {/* Desktop Table */}
         <div className="table-responsive anim-fade-in-up">
@@ -62,10 +75,10 @@ function Topics() {
               {responses.map((entry, index) => (
                 <tr key={entry.id} className="anim-fade-in">
                   <td>{index + 1}</td>
-                  <td title={entry.fullName || ""}>{entry.fullName || ""}</td>
-                  <td title={entry.topic || ""}>{entry.topic || ""}</td>
-                  <td title={entry.track || ""}>{entry.track || ""}</td>
-                  <td title={entry.sessionFormat || ""}>{entry.sessionFormat || ""}</td>
+                  <td className="name-cell" title={entry.fullName || ""}>{entry.fullName || ""}</td>
+                  <td className="topic-cell" title={entry.topic || ""}>{entry.topic || ""}</td>
+                  <td className="track-cell" title={entry.track || ""}>{entry.track || ""}</td>
+                  <td className="format-cell" title={entry.sessionFormat || ""}>{entry.sessionFormat || ""}</td>
                   <td className="description-cell" title={entry.description || ""}>{entry.description || ""}</td>
                 </tr>
               ))}
@@ -103,7 +116,8 @@ function Topics() {
           ))}
         </div>
         </>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -24,6 +24,8 @@ interface ResponseEntry {
 function AdminDashboard() {
   const [responses, setResponses] = useState<ResponseEntry[]>([]);
   const [filter, setFilter] = useState<"all" | "approved">("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,51 +61,113 @@ function AdminDashboard() {
 
 
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     const filtered = filter === "approved" ? responses.filter((r) => r.approved) : responses;
-    if (filtered.length === 0) return;
+    if (filtered.length === 0) {
+      setToast({
+        message: "No data to export",
+        type: 'error'
+      });
+      return;
+    }
 
-    const header = [
-      "#",
-      "Registered",
-      "Full Name",
-      "Phone Number",
-      "Topic",
-      "Track",
-      "Description",
-      "Session Format",
-      "Equipment",
-      "Materials",
-      "Timestamp",
-    ];
-    const rows = filtered.map((entry, index) => [
-      index + 1,
-      (entry.registered || "").replace(/,/g, ""),
-      (entry.fullName || "").replace(/,/g, ""),
-      (entry.phoneNumber || "").replace(/,/g, ""),
-      (entry.topic || "").replace(/,/g, ""),
-      (entry.track || "").replace(/,/g, ""),
-      (entry.description || "").replace(/,/g, ""),
-      (entry.sessionFormat || "").replace(/,/g, ""),
-      (entry.equipment?.join("; ") || "").replace(/,/g, ""),
-      (entry.materials?.url || "").replace(/,/g, ""),
-      entry.timestamp?.seconds
-        ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
-        : "",
-    ]);
+    setIsExporting(true);
 
-    const csvContent =
-      [header, ...rows].map((row) => row.join(",")).join("\n");
+    try {
+      // Helper function to escape CSV values
+      const escapeCSV = (value: string | number | undefined): string => {
+        if (value === undefined || value === null) return "";
+        const str = String(value);
+        // If the value contains commas, quotes, or newlines, wrap it in quotes and escape internal quotes
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "pledge_submissions.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const header = [
+        "Number",
+        "Registered",
+        "Full Name",
+        "Phone Number",
+        "Topic",
+        "Track", 
+        "Description",
+        "Session Format",
+        "Equipment",
+        "Materials URL",
+        "Approved",
+        "Submission Date"
+      ];
+
+      const rows = filtered.map((entry, index) => [
+        escapeCSV(index + 1),
+        escapeCSV(entry.registered || ""),
+        escapeCSV(entry.fullName || ""),
+        escapeCSV(entry.phoneNumber || ""),
+        escapeCSV(entry.topic || ""),
+        escapeCSV(entry.track || ""),
+        escapeCSV(entry.description || ""),
+        escapeCSV(entry.sessionFormat || ""),
+        escapeCSV(entry.equipment?.join("; ") || ""),
+        escapeCSV(entry.materials?.url || ""),
+        escapeCSV(entry.approved ? "Yes" : "No"),
+        escapeCSV(entry.timestamp?.seconds 
+          ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
+          : "")
+      ]);
+
+      // Create CSV content with UTF-8 BOM for proper Excel support
+      const csvContent = "\ufeff" + [header.join(","), ...rows.map(row => row.join(","))].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().split('T')[0];
+      const filterText = filter === "approved" ? "approved" : "all";
+      link.setAttribute("download", `barcamp-pledge-submissions-${filterText}-${currentDate}.csv`);
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(url);
+      
+      console.log(`Successfully exported ${filtered.length} submissions to CSV`);
+      
+      // Show success toast
+      setToast({
+        message: `Successfully exported ${filtered.length} submissions to CSV`,
+        type: 'success'
+      });
+      
+      // Brief delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      setToast({
+        message: "Error exporting CSV. Please try again.",
+        type: 'error'
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleApprove = async (entryId: string) => {
     try {
@@ -139,64 +203,130 @@ function AdminDashboard() {
 
 
   return (
-    <div className="container mt-4">
-      <div className="admin-header anim-fade-in-up">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-          <h2 className="mb-2 mb-md-0">Pledge Submissions</h2>
-          <div className="d-flex align-items-center gap-2 mt-2 mt-md-0">
-            <label htmlFor="filterSelect" className="form-label mb-0 me-2">Filter:</label>
-            <select
-              id="filterSelect"
-              className="form-select"
-              style={{ width: "200px" }}
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as "all" | "approved")}
-            >
-              <option value="all">All</option>
-              <option value="approved">Approved only</option>
-            </select>
+    <div className="min-vh-100 p-3 p-md-4 anim-fade-in">
+      {/* Toast Notification */}
+      {toast && (
+        <div 
+          className={`position-fixed top-0 end-0 m-3 alert ${toast.type === 'success' ? 'alert-success' : 'alert-danger'} alert-dismissible anim-fade-in`}
+          style={{ zIndex: 1050, maxWidth: '400px' }}
+          role="alert"
+        >
+          <div className="d-flex align-items-center">
+            {toast.type === 'success' ? (
+              <svg width="20" height="20" fill="currentColor" className="me-2 text-success">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+              </svg>
+            ) : (
+              <svg width="20" height="20" fill="currentColor" className="me-2 text-danger">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+              </svg>
+            )}
+            {toast.message}
+          </div>
+          <button 
+            type="button" 
+            className="btn-close" 
+            onClick={() => setToast(null)}
+            aria-label="Close"
+          ></button>
+        </div>
+      )}
+      
+      <div className="container-fluid" style={{ maxWidth: "1800px" }}>
+        <div className="admin-header-modern mb-5">
+          <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center">
+            <div className="mb-3 mb-lg-0">
+              <h1 className="mb-2 fw-bold anim-fade-in-up">Admin Dashboard</h1>
+              <p className="text-muted mb-0 anim-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                Manage pledge submissions and approvals
+              </p>
+            </div>
+            <div className="admin-actions d-flex flex-column flex-sm-row gap-3">
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="filterSelect" className="form-label mb-0 fw-semibold">Filter:</label>
+                <select
+                  id="filterSelect"
+                  className="form-select"
+                  style={{ minWidth: "150px" }}
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as "all" | "approved")}
+                >
+                  <option value="all">All Submissions</option>
+                  <option value="approved">Approved Only</option>
+                </select>
+              </div>
+              <button 
+                className="btn btn-outline-primary"
+                onClick={handleExportCSV}
+                disabled={responses.length === 0 || isExporting}
+              >
+                {isExporting ? (
+                  <>
+                    <div className="spinner-border spinner-border-sm me-2" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" fill="currentColor" className="me-2">
+                      <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                      <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                    Export CSV
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {responses.length === 0 ? (
-        <div className="alert alert-info anim-fade-in">No pledge responses yet.</div>
-      ) : (
-        <>
-        
-        
-        {/* Desktop Table */}
-        <div className="table-responsive anim-fade-in-up">
-        <table className="table table-striped table-hover align-middle table-mobile-optimized">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Registered</th>
-              <th>Full Name</th>
-              <th>Phone</th>
-              <th>Topic</th>
-              <th>Track</th>
-              <th>Description</th>
-              <th>Format</th>
-              <th>Equipment</th>
-              <th>Materials</th>
-              <th>Time</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(filter === "approved" ? responses.filter((r) => r.approved) : responses).map((entry, index) => (
-              <tr key={entry.id} className="anim-fade-in">
-                <td>{index + 1}</td>
-                <td title={entry.registered || ""}>{entry.registered || ""}</td>
-                <td title={entry.fullName || ""}>{entry.fullName || ""}</td>
-                <td title={entry.phoneNumber || ""}>{entry.phoneNumber || ""}</td>
-                <td title={entry.topic || ""}>{entry.topic || ""}</td>
-                <td title={entry.track || ""}>{entry.track || ""}</td>
-                <td className="description-cell" title={entry.description || ""}>{entry.description || ""}</td>
-                <td title={entry.sessionFormat || ""}>{entry.sessionFormat || ""}</td>
-                <td title={entry.equipment?.join(", ") || ""}>{entry.equipment?.join(", ") || ""}</td>
-                <td>
+        {responses.length === 0 ? (
+          <div className="card text-center">
+            <div className="card-body p-5">
+              <svg width="64" height="64" fill="currentColor" className="text-muted mb-3" viewBox="0 0 16 16">
+                <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                <path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+              </svg>
+              <h4 className="text-muted">No submissions yet</h4>
+              <p className="text-muted">Pledge submissions will appear here once people start submitting.</p>
+            </div>
+          </div>
+        ) : (
+          <>
+          
+          {/* Desktop Table */}
+          <div className="table-responsive anim-fade-in-up">
+            <table className="table table-striped table-hover align-middle table-mobile-optimized admin-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '50px' }}>#</th>
+                  <th style={{ width: '80px' }}>Registered</th>
+                  <th style={{ width: '150px' }}>Full Name</th>
+                  <th style={{ width: '120px' }}>Phone</th>
+                  <th style={{ width: '200px' }}>Topic</th>
+                  <th style={{ width: '100px' }}>Track</th>
+                  <th style={{ width: '250px' }}>Description</th>
+                  <th style={{ width: '120px' }}>Format</th>
+                  <th style={{ width: '150px' }}>Equipment</th>
+                  <th style={{ width: '100px' }}>Materials</th>
+                  <th style={{ width: '120px' }}>Time</th>
+                  <th style={{ width: '150px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(filter === "approved" ? responses.filter((r) => r.approved) : responses).map((entry, index) => (
+                  <tr key={entry.id} className="anim-fade-in">
+                    <td>{index + 1}</td>
+                    <td className="registered-cell" title={entry.registered || ""}>{entry.registered || ""}</td>
+                    <td className="name-cell" title={entry.fullName || ""}>{entry.fullName || ""}</td>
+                    <td className="phone-cell" title={entry.phoneNumber || ""}>{entry.phoneNumber || ""}</td>
+                    <td className="topic-cell" title={entry.topic || ""}>{entry.topic || ""}</td>
+                    <td className="track-cell" title={entry.track || ""}>{entry.track || ""}</td>
+                    <td className="description-cell" title={entry.description || ""}>{entry.description || ""}</td>
+                    <td className="format-cell" title={entry.sessionFormat || ""}>{entry.sessionFormat || ""}</td>
+                    <td className="equipment-cell" title={entry.equipment?.join(", ") || ""}>{entry.equipment?.join(", ") || ""}</td>
+                    <td className="materials-cell">
                   {entry.materials?.url ? (
                     <a
                       href={entry.materials.url}
@@ -373,13 +503,9 @@ function AdminDashboard() {
             </div>
           ))}
         </div>
-        <div className="mb-3">
-          <button className="btn btn-success" onClick={handleExportCSV}>
-              Export to CSV
-          </button>
-        </div>
         </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
